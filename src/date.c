@@ -1,5 +1,5 @@
 /* date - print or set the system date and time
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2021 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -583,6 +583,9 @@ static bool
 show_date (const char *format, struct timespec when, timezone_t tz)
 {
   struct tm tm;
+
+  if (parse_datetime_flags & PARSE_DATETIME_DEBUG)
+    error (0, 0, _("output format: %s"), quote (format));
 
   if (localtime_rz (tz, &when.tv_sec, &tm))
     {

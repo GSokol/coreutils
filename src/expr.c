@@ -1,5 +1,5 @@
 /* expr -- evaluate expressions.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2021 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ mbs_logical_substr (const char *s, size_t pos, size_t len)
   return v;
 }
 
-/* Return the number of logical characteres (possibly multibyte)
+/* Return the number of logical characters (possibly multibyte)
    that are in string S in the first OFS octets.
 
    Example in UTF-8:
@@ -614,8 +614,13 @@ docolon (VALUE *sv, VALUE *pv)
       /* Were \(...\) used? */
       if (re_buffer.re_nsub > 0)
         {
-          sv->u.s[re_regs.end[1]] = '\0';
-          v = str_value (sv->u.s + re_regs.start[1]);
+          if (re_regs.end[1] < 0)
+            v = str_value ("");
+          else
+            {
+              sv->u.s[re_regs.end[1]] = '\0';
+              v = str_value (sv->u.s + re_regs.start[1]);
+            }
         }
       else
         {

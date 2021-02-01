@@ -145,7 +145,7 @@
 This manual documents version @value{VERSION} of the GNU core
 utilities, including the standard programs for text and file manipulation.
 
-Copyright @copyright{} 1994-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1994--2021 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -1805,9 +1805,9 @@ start of body;
 start of footer.
 @end table
 
-The two characters from which these strings are made can be changed from
-@samp{\} and @samp{:} via options (see below), but the pattern and
-length of each string cannot be changed.
+The characters from which these strings are made can be changed from
+@samp{\} and @samp{:} via options (see below), but the pattern
+of each string cannot be changed.
 
 A section delimiter is replaced by an empty line on output.  Any text
 that comes before the first section delimiter string in the input file
@@ -1847,6 +1847,9 @@ expression @var{bre}.
 @cindex section delimiters of pages
 Set the section delimiter characters to @var{cd}; default is
 @samp{\:}.  If only @var{c} is given, the second remains @samp{:}.
+As a GNU extension more than two characters can be specified,
+and also if @var{cd} is empty (@option{-d ''}), then section
+matching is disabled.
 (Remember to protect @samp{\} or other metacharacters from shell
 expansion with quotes or extra backslashes.)
 
@@ -1867,6 +1870,7 @@ Analogous to @option{--body-numbering}.
 @opindex -i
 @opindex --line-increment
 Increment line numbers by @var{number} (default 1).
+@var{number} can be negative to decrement.
 
 @item -l @var{number}
 @itemx --join-blank-lines=@var{number}
@@ -1916,6 +1920,7 @@ Separate the line number from the text line in the output with
 @opindex -v
 @opindex --starting-line-number
 Set the initial line number on each logical page to @var{number} (default 1).
+The starting @var{number} can be negative.
 
 @item -w @var{number}
 @itemx --number-width=@var{number}
@@ -4394,6 +4399,12 @@ Plus infinity.
 Use this option only if there is no alternative; it is much slower than
 @option{--numeric-sort} (@option{-n}) and it can lose information when
 converting to floating point.
+
+You can use this option to sort hexadecimal numbers prefixed with
+@samp{0x} or @samp{0X}, where those numbers are not fixed width,
+or of varying case.  However for hex numbers of consistent case,
+and left padded with @samp{0} to a consistent width, a standard
+lexicographic sort will be faster.
 
 @item -h
 @itemx --human-numeric-sort
@@ -7703,7 +7714,7 @@ high performance (``contiguous data'') file
 @item d
 directory
 @item D
-door (Solaris 2.5 and up)
+door (Solaris)
 @c @item F
 @c semaphore, if this is a distinct file type
 @item l
@@ -7717,7 +7728,7 @@ network special file (HP-UX)
 @item p
 FIFO (named pipe)
 @item P
-port (Solaris 10 and up)
+port (Solaris)
 @c @item Q
 @c message queue, if this is a distinct file type
 @item s
@@ -10682,6 +10693,8 @@ Set the file permission bits of created directories to @var{mode},
 which uses the same syntax as
 in @command{chmod} and uses @samp{a=rwx} (read, write and execute allowed for
 everyone) for the point of the departure.  @xref{File permissions}.
+This option affects only directories given on the command line;
+it does not affect any parents that may be created via the @option{-p} option.
 
 Normally the directory has the desired file mode bits at the moment it
 is created.  As a GNU extension, @var{mode} may also mention
@@ -10697,15 +10710,18 @@ overridden in this way.
 @opindex --parents
 @cindex parent directories, creating
 Make any missing parent directories for each argument, setting their
-file permission bits to the umask modified by @samp{u+wx}.  Ignore
+file permission bits to @samp{=rwx,u+wx},
+that is, with the umask modified by @samp{u+wx}.  Ignore
 existing parent directories, and do not change their file permission
 bits.
 
-To set the file permission bits of any newly-created parent
-directories to a value that includes @samp{u+wx}, you can set the
+If the @option{-m} option is also given, it does not affect
+file permission bits of any newly-created parent directories.
+To control these bits, set the
 umask before invoking @command{mkdir}.  For example, if the shell
 command @samp{(umask u=rwx,go=rx; mkdir -p P/Q)} creates the parent
-@file{P} it sets the parent's permission bits to @samp{u=rwx,go=rx}.
+@file{P} it sets the parent's file permission bits to @samp{u=rwx,go=rx}.
+(The umask must include @samp{u=wx} for this method to work.)
 To set a parent's special mode bits as well, you can invoke
 @command{chmod} after @command{mkdir}.  @xref{Directory Setuid and
 Setgid}, for how the set-user-ID and set-group-ID bits of
@@ -10990,7 +11006,19 @@ Give a diagnostic for each successful removal.
 
 @end table
 
-@xref{rm invocation}, for how to remove non-empty directories (recursively).
+@xref{rm invocation}, for how to remove non-empty directories recursively.
+
+To remove all empty directories under @var{dirname}, including
+directories that become empty because other directories are removed,
+you can use either of the following commands:
+
+@example
+# This uses GNU extensions.
+find @var{dirname} -type d -empty -delete
+
+# This runs on any POSIX platform.
+find @var{dirname} -depth -type d -exec rmdir @{@} +
+@end example
 
 @exitstatus
 
@@ -11808,7 +11836,7 @@ are also listed.
 @cindex file system space, retrieving old data more quickly
 Do not invoke the @code{sync} system call before getting any usage data.
 This may make @command{df} run significantly faster on systems with many
-disks, but on some systems (notably SunOS) the results may be slightly
+disks, but on some systems (notably Solaris) the results may be slightly
 out of date.  This is the default.
 
 @item --output
@@ -11909,7 +11937,7 @@ otherwise.  @xref{Block size}.
 @opindex --sync
 @cindex file system space, retrieving current data more slowly
 Invoke the @code{sync} system call before getting any usage data.  On
-some systems (notably SunOS), doing this yields more up to date results,
+some systems (notably Solaris), doing this yields more up to date results,
 but in general this option makes @command{df} much slower, especially when
 there are many or very busy file systems.
 
@@ -11964,7 +11992,7 @@ all systems.
 @opindex xfs @r{file system type}
 @opindex btrfs @r{file system type}
 A file system on a locally-mounted hard disk.  (The system might even
-support more than one type here; Linux does.)
+support more than one type here; GNU/Linux does.)
 
 @item iso9660@r{, }cdfs
 @cindex CD-ROM file system type
@@ -13334,6 +13362,8 @@ True if the strings are equal.
 @opindex ==
 @cindex equal string check
 True if the strings are equal (synonym for =).
+Note this form is not as portable to other
+shells and systems.
 
 @item @var{string1} != @var{string2}
 @opindex !=
@@ -13529,12 +13559,14 @@ second is considered to be a (basic, a la GNU @code{grep}) regular
 expression, with a @code{^} implicitly prepended.  The first argument is
 then matched against this regular expression.
 
-If the match succeeds and @var{regex} uses @samp{\(} and @samp{\)}, the
-@code{:} expression returns the part of @var{string} that matched the
-subexpression; otherwise, it returns the number of characters matched.
+If @var{regex} does not use @samp{\(} and @samp{\)}, the @code{:}
+expression returns the number of characters matched, or 0 if the match
+fails.
 
-If the match fails, the @code{:} operator returns the null string if
-@samp{\(} and @samp{\)} are used in @var{regex}, otherwise 0.
+If @var{regex} uses @samp{\(} and @samp{\)}, the @code{:} expression
+returns the part of @var{string} that matched the subexpression, or
+the null string if the match failed or the subexpression did not
+contribute to the match.
 
 @kindex \( @r{regexp operator}
 Only the first @samp{\( @dots{} \)} pair is relevant to the return
@@ -13546,9 +13578,8 @@ expression operators.
 @kindex \| @r{regexp operator}
 In the regular expression, @code{\+}, @code{\?}, and @code{\|} are
 operators which respectively match one or more, zero or one, or separate
-alternatives.  SunOS and other @command{expr}'s treat these as regular
-characters.  (POSIX allows either behavior.)
-@xref{Top, , Regular Expression Library, regex, Regex}, for details of
+alternatives.  These operators are GNU extensions.  @xref{Regular Expressions,,
+Regular Expressions, grep, The GNU Grep Manual}, for details of
 regular expression syntax.  Some examples are in @ref{Examples of expr}.
 
 @item match @var{string} @var{regex}
@@ -15186,7 +15217,7 @@ Switch to a different shell layer.  Non-POSIX.
 
 @item status
 @opindex status
-Send an info signal.  Not currently supported on Linux.  Non-POSIX.
+Send an info signal.  Not currently supported on GNU/Linux.  Non-POSIX.
 
 @item start
 @opindex start
@@ -16599,8 +16630,8 @@ parsed reliably.  In the following example, @var{kernel-version} is
 
 @example
 uname -a
-@result{} Linux dumdum.example.org 5.7.9-100.fc31.x86_64@c
- #1 SMP Fri Jul 17 17:18:38 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+@result{} Linux dumdum.example.org 5.9.16-200.fc33.x86_64@c
+ #1 SMP Mon Dec 21 14:08:22 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 @end example
 
 
@@ -18319,6 +18350,12 @@ For instance, the following could be used to @command{sleep} for
 sleep 1234e-3 567.89e-6
 @end example
 
+Also one could sleep indefinitely like:
+
+@example
+sleep inf
+@end example
+
 The only options are @option{--help} and @option{--version}.  @xref{Common
 options}.
 
@@ -18728,16 +18765,16 @@ $ LC_ALL=en_US.utf8 numfmt --from=iec --grouping 2G
 $ LC_ALL=ta_IN numfmt --from=iec --grouping 2G
 2,14,74,83,648
 
-$ LC_ALL=C ./src/numfmt --from=iec --format="==%'15f==" 2G
+$ LC_ALL=C numfmt --from=iec --format="==%'15f==" 2G
 ==     2147483648==
 
-$ LC_ALL=en_US.utf8 ./src/numfmt --from=iec --format="==%'15f==" 2G
+$ LC_ALL=en_US.utf8 numfmt --from=iec --format="==%'15f==" 2G
 ==  2,147,483,648==
 
-$ LC_ALL=en_US.utf8 ./src/numfmt --from=iec --format="==%'-15f==" 2G
+$ LC_ALL=en_US.utf8 numfmt --from=iec --format="==%'-15f==" 2G
 ==2,147,483,648  ==
 
-$ LC_ALL=ta_IN ./src/numfmt --from=iec --format="==%'15f==" 2G
+$ LC_ALL=ta_IN numfmt --from=iec --format="==%'15f==" 2G
 == 2,14,74,83,648==
 @end example
 
@@ -18768,7 +18805,8 @@ The sequence of numbers ends when the sum of the current number and
 so @code{seq 1 10 10} only produces @samp{1}.
 @var{increment} must not be @samp{0}; use the tool @command{yes} to get
 repeated output of a constant number.
-@var{first}, @var{increment} and @var{last} must not be @code{NaN}.
+@var{first}, @var{increment} and @var{last} must not be @code{NaN},
+but @code{inf} is supported.
 Floating-point numbers may be specified in either the current or
 the C locale.  @xref{Floating point}.
 
@@ -18864,8 +18902,10 @@ $ seq 50000000000000000000 2 50000000000000000004
 @end example
 
 However, note that when limited to non-negative whole numbers,
-an increment of 1 and no format-specifying option, seq can print
-arbitrarily large numbers.
+an increment of less than 200, and no format-specifying option,
+seq can print arbitrarily large numbers.
+Therefore @command{seq inf} can be used to
+generate an infinite sequence of numbers.
 
 Be careful when using @command{seq} with outlandish values: otherwise
 you may see surprising results, as @command{seq} uses floating point
@@ -18988,7 +19028,7 @@ might be used.  What it's really about is the ``Software Tools'' philosophy
 of program development and usage.
 
 The software tools philosophy was an important and integral concept
-in the initial design and development of Unix (of which Linux and GNU are
+in the initial design and development of Unix (of which GNU/Linux and GNU are
 essentially clones).  Unfortunately, in the modern day press of
 Internetworking and flashy GUIs, it seems to have fallen by the
 wayside.  This is a shame, since it provides a powerful mental model
@@ -19416,10 +19456,7 @@ A minor modification to the above pipeline can give us a simple spelling
 checker!  To determine if you've spelled a word correctly, all you have to
 do is look it up in a dictionary.  If it is not there, then chances are
 that your spelling is incorrect.  So, we need a dictionary.
-The conventional location for a dictionary is @file{/usr/dict/words}.
-On my GNU/Linux system,@footnote{Redhat Linux 6.1, for the November 2000
-revision of this article.}
-this is a sorted, 45,402 word dictionary.
+The conventional location for a dictionary is @file{/usr/share/dict/words}.
 
 Now, how to compare our file with the dictionary?  As before, we generate
 a sorted list of words, one per line:
@@ -19431,11 +19468,16 @@ $ tr '[:upper:]' '[:lower:]' < whats.gnu | tr -cd '[:alnum:]_ \n' |
 
 Now, all we need is a list of words that are @emph{not} in the
 dictionary.  Here is where the @command{comm} command comes in.
+Unfortunately @command{comm} operates on sorted input and
+@file{/usr/share/dict/words} is not sorted the way that @command{sort}
+and @command{comm} normally use, so we first create a properly-sorted
+copy of the dictionary and then run a pipeline that uses the copy.
 
 @example
+$ sort /usr/share/dict/words > sorted-words
 $ tr '[:upper:]' '[:lower:]' < whats.gnu | tr -cd '[:alnum:]_ \n' |
 > tr -s ' ' '\n' | sort -u |
-> comm -23 - /usr/dict/words
+> comm -23 - sorted-words
 @end example
 
 The @option{-2} and @option{-3} options eliminate lines that are only in the
